@@ -1,0 +1,85 @@
+# Publishes a release for each version tag: `git tag v1.1.0 && git push origin v1.1.0`.
+# Builds and signs the app and uploads it as a DMG to a GitHub release. See README › Releasing
+# for the secrets it needs.
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    env:
+      TAG: ${{ github.ref_name }}
+      APP: build/Build/Products/Release/OpenEdgeBar.app
+      REPO: ilyassesalama/OpenEdgeBar
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The build number counts every commit.
+          fetch-depth: 0
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build
+        run: |
+          xcodegen generate --quiet
+          # Signed in the next steps instead: Xcode refuses identities it does not trust, and a
+          # self-signed one is not.
+          xcodebuild \
+            -project OpenEdgeBar.xcodeproj \
+            -scheme OpenEdgeBar \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            -quiet \
+            MARKETING_VERSION="${TAG#v}" \
+            CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Sign
+        env:
+          CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          # Every release is signed with the same self-signed certificate, so every version has the
+          # same signature and the Accessibility permission survives updates.
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password=$(uuidgen)
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          # Lets codesign use the key without a prompt nobody is there to answer.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" > /dev/null
+          rm "$RUNNER_TEMP/certificate.p12"
+          # codesign only finds identities in keychains on the search list, even with --keychain.
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          security find-identity -p codesigning "$keychain"
+
+          codesign --force --sign "OpenEdgeBar Release" --keychain "$keychain" \
+            --options runtime --entitlements App/OpenEdgeBar.entitlements --timestamp=none "$APP"
+          codesign --verify --strict "$APP"
+
+      - name: Package
+        run: |
+          # The app next to a link to Applications, so it installs by dragging one onto the other.
+          staging="$RUNNER_TEMP/dmg"
+          mkdir -p "$staging"
+          cp -R "$APP" "$staging/"
+          ln -s /Applications "$staging/Applications"
+          hdiutil create -volname OpenEdgeBar -srcfolder "$staging" -format UDZO -ov "OpenEdgeBar-${TAG#v}.dmg"
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" "OpenEdgeBar-${TAG#v}.dmg" \
+            --repo "$REPO" --title "OpenEdgeBar ${TAG#v}" --generate-notes

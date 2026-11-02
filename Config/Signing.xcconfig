@@ -1,0 +1,10 @@
+// Signs with a stable identity when Local.xcconfig provides one.
+//
+// macOS remembers the Accessibility permission per code signature. An ad-hoc signature changes on
+// every build, so the permission would have to be granted again after each rebuild. Copy
+// Local.example.xcconfig to Local.xcconfig and set your team to keep it.
+
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = -
+
+#include? "Local.xcconfig"

@@ -1,0 +1,64 @@
+# Generates OpenEdgeBar.xcodeproj: run `xcodegen generate`.
+name: OpenEdgeBar
+options:
+  bundleIdPrefix: app.openedgebar
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  OpenEdgeBarKit:
+    path: .
+
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  OpenEdgeBar:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: OpenEdgeBarKit
+        products:
+          - EdgeBarCore
+          - EdgeBarSystem
+          - EdgeBarUI
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: OpenEdgeBar
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: Open source under the MIT License.
+    entitlements:
+      path: App/OpenEdgeBar.entitlements
+      properties: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.openedgebar.OpenEdgeBar
+        PRODUCT_NAME: OpenEdgeBar
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+
+schemes:
+  OpenEdgeBar:
+    build:
+      targets:
+        OpenEdgeBar: all
+    run:
+      config: Debug
+    archive:
+      config: Release
