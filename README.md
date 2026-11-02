@@ -2,6 +2,13 @@
 
 Slide the edges of your MacBook trackpad to change brightness and volume. An open-source take on [EdgeBar](https://edgebar.xyz).
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark.png">
+    <img src="docs/menu-light.png" width="380" alt="The OpenEdgeBar menu: brightness and volume levels, haptic feedback, Quick Mute, Media Strip, sensitivity and edge width">
+  </picture>
+</p>
+
 - **Brightness on the left, volume on the right.** Slide a finger up or down the edge. You get the same on-screen display as the keyboard keys.
 - **Quick Mute.** Double-tap the top-right corner.
 - **Media Strip.** Flick a finger along the bottom edge to skip tracks. Tapping it to play or pause is optional and off by default, so clicks near the edge don't pause your music.
@@ -50,6 +57,13 @@ OpenEdgeBar presses the brightness and volume keys for you, the same keys as on 
 ## The welcome tour
 
 The first launch opens a short tour in a native macOS window with Liquid Glass controls (frosted before macOS 26): a welcome, a step to allow the keys, a hands-on practice where your real fingers appear live on a picture of your trackpad and each gesture ticks off a challenge, a few options, and a finale. You can replay it from the menu (**… › Welcome Tour**) or skip it with Escape.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/tour-dark.png">
+    <img src="docs/tour-light.png" width="720" alt="The welcome tour's practice step: a picture of the trackpad with live brightness and volume levels, and challenges to slide each edge, mute and skip a song">
+  </picture>
+</p>
 
 Reading the trackpad needs no permission.
 
